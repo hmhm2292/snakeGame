@@ -2,8 +2,8 @@ import React, {PureComponent} from 'react';
 import {FlatList, View, Dimensions, StyleSheet} from 'react-native';
 
 const screenWidth = Math.round(Dimensions.get('window').width);
-const rows = 5;
-const columns = 5;
+const rows = 35;
+const columns = 35;
 
 export class Grid extends PureComponent {
   constructor(props) {

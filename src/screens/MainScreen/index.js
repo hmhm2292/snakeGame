@@ -9,8 +9,8 @@ import Header from '../../components/Header';
 import Grid from '../../components/Grid';
 
 const screenWidth = Math.round(Dimensions.get('window').width);
-const rows = 5;
-const columns = 5;
+const rows = 35;
+const columns = 35;
 
 export class MainScreen extends Component {
   constructor() {
@@ -52,12 +52,6 @@ export class MainScreen extends Component {
   }
 
   makeRandomFood = () => {
-    // make random food
-
-    // return {
-    //   row: 10,
-    //   col: 10,
-    // };
     return {
       row: Math.floor(Math.random() * this.state.rows),
       col: Math.floor(Math.random() * this.state.columns),
@@ -117,41 +111,25 @@ export class MainScreen extends Component {
     return grid;
   };
 
-  isFoodEqualTail = (tail, food) => {
-    return food.row === tail.row && food.col === tail.col;
-  };
-
-  checkIfRandomFoodMeetSnake = (tail, food) => {
-    let isCollide = tail
-      .map(eachTail => {
-        return this.isFoodEqualTail(tail, food);
-      })
-      .some(collide => collide === true);
-
-    return isCollide;
-  };
-
   makeRandomFoodNotLandOnSnake = tail => {
-    while (true) {
-      console.log('n');
+    let isTrue = true;
+    while (isTrue) {
       let food = this.makeRandomFood();
-      if (!this.checkIfRandomFoodMeetSnake(tail, food)) {
-        console.log('hihi', this.checkIfRandomFoodMeetSnake(tail, food));
+      if (!this.checkIfCollide(tail, food)) {
+        isTrue = false;
         return food;
       }
     }
   };
 
-  isHeadEqualTail = (head, tail) => {
-    return head.row === tail.row && head.col === tail.col;
+  isEqual = (tail, foodOrHead) => {
+    return tail.row === foodOrHead.row && tail.col === foodOrHead.col;
   };
 
-  checkIfHeadCollideWithBody = snake => {
-    let {head, tail} = snake;
-
+  checkIfCollide = (tail, foodOrHead) => {
     let isCollide = tail
       .map(eachTail => {
-        return this.isHeadEqualTail(head, eachTail);
+        return this.isEqual(eachTail, foodOrHead);
       })
       .some(collide => collide === true);
 
@@ -182,7 +160,7 @@ export class MainScreen extends Component {
       });
       if (head.row === food.row && head.col === food.col) {
         food = this.makeRandomFoodNotLandOnSnake(tail);
-        console.log('byebye', this.makeRandomFoodNotLandOnSnake(tail));
+        // console.log('byebye', this.makeRandomFoodNotLandOnSnake(tail));
       } else {
         tail.pop();
       }
@@ -204,9 +182,10 @@ export class MainScreen extends Component {
       }
 
       let isDead = false;
+
       if (
         this.checkIfHeadCollideWithWall(head) ||
-        this.checkIfHeadCollideWithBody(snake)
+        this.checkIfCollide(tail, head)
       ) {
         isDead = true;
       }
@@ -231,8 +210,6 @@ export class MainScreen extends Component {
 
   onPressStart = () => {
     let timer = 1100 - this.state.speed * 100;
-
-    console.log({timer});
 
     this.timerTick = setInterval(() => {
       this.updateSnake();
@@ -287,7 +264,6 @@ export class MainScreen extends Component {
   };
 
   render() {
-    console.log('render');
     return (
       <SafeAreaView>
         <Header score={this.state.score} />
