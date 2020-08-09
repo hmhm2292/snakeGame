@@ -1,18 +1,25 @@
 import React, {Component} from 'react';
-import {View, Image, StyleSheet, Dimensions, SafeAreaView} from 'react-native';
+import {View, Image, StyleSheet, Dimensions} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {connect} from 'react-redux';
 
-import gameOver from '../../assets/hiclipart.com.png';
+import {initializeApp} from '../../redux/reducers/appState';
+
 import ArrowKeys from '../../components/ArrowKeys';
 import StartResetButton from '../../components/StartResetButton';
 import SpeedSelector from '../../components/SpeedSelector';
 import Header from '../../components/Header';
 import Grid from '../../components/Grid';
 
+import gameOver from '../../assets/hiclipart.com.png';
+import snakeCover from '../../assets/snakeCover.png';
+
+import reactotron from 'reactotron-react-native';
+
 const screenWidth = Math.round(Dimensions.get('window').width);
 const rows = 35;
 const columns = 35;
-
-export class MainScreen extends Component {
+class MainScreen extends Component {
   constructor() {
     super();
     this.state = {
@@ -43,7 +50,7 @@ export class MainScreen extends Component {
     ) {
       console.log('gameOver');
       clearInterval(this.timerTick);
-      this.setState({playing: false});
+      this.updateGameState();
     }
   }
 
@@ -147,6 +154,10 @@ export class MainScreen extends Component {
     } else {
       return false;
     }
+  };
+
+  updateGameState = () => {
+    this.setState({playing: false});
   };
 
   updateSnake = () => {
@@ -275,34 +286,38 @@ export class MainScreen extends Component {
               resizeMode={'contain'}
             />
           ) : (
-            <View>
-              <Grid gridColumns={this.state.columns} grid={this.state.grid} />
+            <>
+              <View>
+                <Grid gridColumns={this.state.columns} grid={this.state.grid} />
 
-              {this.state.playing ? (
-                <>
-                  <View
-                    style={[
-                      styles.foodItem,
-                      {
-                        left: (screenWidth / columns) * this.state.food.col,
-                        top: (screenWidth / rows) * this.state.food.row,
-                      },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.snake,
-                      {
-                        left:
-                          (screenWidth / columns) * this.state.snake.head.col,
-                        top: (screenWidth / rows) * this.state.snake.head.row,
-                      },
-                    ]}
-                  />
-                  {this.renderSnakeTail()}
-                </>
-              ) : null}
-            </View>
+                {this.state.playing ? (
+                  <>
+                    <View
+                      style={[
+                        styles.foodItem,
+                        {
+                          left: (screenWidth / columns) * this.state.food.col,
+                          top: (screenWidth / rows) * this.state.food.row,
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.snake,
+                        {
+                          left:
+                            (screenWidth / columns) * this.state.snake.head.col,
+                          top: (screenWidth / rows) * this.state.snake.head.row,
+                        },
+                      ]}
+                    />
+                    {this.renderSnakeTail()}
+                  </>
+                ) : (
+                  <Image source={snakeCover} style={styles.snakeCover} />
+                )}
+              </View>
+            </>
           )}
         </View>
 
@@ -364,6 +379,23 @@ const styles = StyleSheet.create({
     marginTop: 100,
     width: screenWidth,
   },
+  snakeCover: {
+    width: screenWidth,
+    height: screenWidth,
+    position: 'absolute',
+  },
 });
 
-export default MainScreen;
+const mapStateToProps = state => ({
+  appState: state.appState.appState,
+  stateParams: state.appState.params,
+});
+
+const mapDispatchToProps = dispatch => ({
+  initializeApp: () => dispatch(initializeApp()),
+});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(MainScreen);
