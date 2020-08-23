@@ -1,11 +1,11 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-const Header = ({score}) => {
+const Header = ({score, onPress}) => {
   return (
     <View style={styles.header}>
       <Text style={styles.score}>SCORE: {score}</Text>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onPress}>
         <Text style={styles.score}>Score Board</Text>
       </TouchableOpacity>
     </View>

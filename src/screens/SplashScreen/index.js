@@ -93,7 +93,6 @@ class SplashScreen extends PureComponent {
   };
 
   render() {
-    reactotron.log('tick');
     return (
       <SafeAreaView style={styles.container}>
         <View />

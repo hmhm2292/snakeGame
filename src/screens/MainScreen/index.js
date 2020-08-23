@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, Image, StyleSheet, Dimensions} from 'react-native';
+import {View, Image, StyleSheet, Dimensions, Text, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {connect} from 'react-redux';
 
@@ -15,6 +15,9 @@ import gameOver from '../../assets/hiclipart.com.png';
 import snakeCover from '../../assets/snakeCover.png';
 
 import reactotron from 'reactotron-react-native';
+import ScoreBoardModal from '../../system/ScoreBoardModal';
+import {updateScoreBoard, postNewScore} from '../../redux/reducers/scoreBoard';
+import {TextInput, TouchableOpacity} from 'react-native-gesture-handler';
 
 const screenWidth = Math.round(Dimensions.get('window').width);
 const rows = 35;
@@ -36,6 +39,9 @@ class MainScreen extends Component {
       playing: false,
       gameOver: false,
       score: 0,
+      isScoreBoardVisible: false,
+      player: '',
+      playerEntered: false,
     };
   }
 
@@ -51,6 +57,17 @@ class MainScreen extends Component {
       console.log('gameOver');
       clearInterval(this.timerTick);
       this.updateGameState();
+    }
+
+    if (prevProps.appState !== this.props.appState) {
+      switch (this.props.appState) {
+        case 'SUCCESS_UPDATE_SCORE_BOARD':
+          return this.setState({isScoreBoardVisible: true});
+        case 'FAILED_UPDATE_SCORE_BOARD':
+          return Alert.alert('Server Error');
+        default:
+          break;
+      }
     }
   }
 
@@ -157,7 +174,16 @@ class MainScreen extends Component {
   };
 
   updateGameState = () => {
-    this.setState({playing: false});
+    this.setState({playing: false}, () => {
+      this.props.updateScoreBoard({
+        player: this.state.player,
+        score: this.state.score,
+      });
+      this.props.postNewScore({
+        player: this.state.player,
+        score: this.state.score,
+      });
+    });
   };
 
   updateSnake = () => {
@@ -219,6 +245,14 @@ class MainScreen extends Component {
     });
   };
 
+  onPressScoreBaord = () => {
+    this.setState({isScoreBoardVisible: true});
+  };
+
+  onCloseScoreBaord = () => {
+    this.setState({isScoreBoardVisible: false});
+  };
+
   onPressStart = () => {
     let timer = 1100 - this.state.speed * 100;
 
@@ -257,6 +291,14 @@ class MainScreen extends Component {
     this.setState({direction: direction});
   };
 
+  onChangeText = value => {
+    this.setState({player: value});
+  };
+
+  onPressEnter = () => {
+    this.setState({playerEntered: true});
+  };
+
   renderSnakeTail = () => {
     return this.state.snake.tail.map((tail, i) => {
       return (
@@ -277,7 +319,11 @@ class MainScreen extends Component {
   render() {
     return (
       <SafeAreaView>
-        <Header score={this.state.score} />
+        <ScoreBoardModal
+          isVisible={this.state.isScoreBoardVisible}
+          onClose={this.onCloseScoreBaord}
+        />
+        <Header score={this.state.score} onPress={this.onPressScoreBaord} />
         <View style={styles.container}>
           {this.state.gameOver ? (
             <Image
@@ -314,7 +360,29 @@ class MainScreen extends Component {
                     {this.renderSnakeTail()}
                   </>
                 ) : (
-                  <Image source={snakeCover} style={styles.snakeCover} />
+                  <View style={styles.converContainer}>
+                    <Image source={snakeCover} style={styles.snakeCover} />
+                    {this.state.playerEntered ? (
+                      <Text style={styles.player}>{this.state.player}</Text>
+                    ) : (
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          maxLength={12}
+                          onChangeText={this.onChangeText}
+                          style={styles.playerInput}
+                          placeholder={'Enter Player Name'}
+                          placeholderTextColor={'gray'}
+                        />
+                        <View style={styles.enterButton}>
+                          <TouchableOpacity
+                            disabled={this.state.player.length < 1}
+                            onPress={this.onPressEnter}>
+                            <Text>Enter</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
                 )}
               </View>
             </>
@@ -379,10 +447,45 @@ const styles = StyleSheet.create({
     marginTop: 100,
     width: screenWidth,
   },
+  converContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   snakeCover: {
     width: screenWidth,
     height: screenWidth,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     position: 'absolute',
+    bottom: 100,
+    zIndex: 10,
+  },
+  player: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
+    position: 'absolute',
+    bottom: 100,
+    zIndex: 10,
+  },
+  playerInput: {
+    width: 170,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    fontSize: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+
+  enterButton: {
+    backgroundColor: 'orange',
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    marginLeft: 4,
   },
 });
 
@@ -393,6 +496,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   initializeApp: () => dispatch(initializeApp()),
+  updateScoreBoard: scoreData => dispatch(updateScoreBoard(scoreData)),
+  postNewScore: newScore => dispatch(postNewScore(newScore)),
 });
 
 export default connect(
